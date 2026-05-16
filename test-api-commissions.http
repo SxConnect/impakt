@@ -1,0 +1,183 @@
+### ============================================
+### IMPAKT - Testes de API - Comissões
+### ============================================
+
+@baseUrl = http://localhost:3000/api
+@token = seu_token_jwt_aqui
+
+### ============================================
+### 1. LISTAR COMISSÕES DO AFILIADO
+### ============================================
+
+### Listar todas as comissões (paginado)
+GET {{baseUrl}}/commissions?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Filtrar por status
+GET {{baseUrl}}/commissions?status=pending
+Authorization: Bearer {{token}}
+
+### Filtrar por produto
+GET {{baseUrl}}/commissions?productId=uuid-do-produto
+Authorization: Bearer {{token}}
+
+### Filtrar por status e produto
+GET {{baseUrl}}/commissions?status=held&productId=uuid-do-produto&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### ============================================
+### 2. RESUMO DE COMISSÕES
+### ============================================
+
+### Obter resumo geral das comissões
+GET {{baseUrl}}/commissions/summary
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "totalPendingCents": 50000,      // R$ 500,00 pendente
+#     "totalHeldCents": 120000,        // R$ 1.200,00 em escrow
+#     "totalReleasedCents": 350000,    // R$ 3.500,00 liberado
+#     "totalCancelledCents": 15000,    // R$ 150,00 cancelado
+#     "totalEarnedCents": 520000,      // R$ 5.200,00 total ganho
+#     "availableForWithdrawalCents": 350000,  // R$ 3.500,00 disponível
+#     "commissionCount": {
+#       "pending": 5,
+#       "held": 12,
+#       "released": 35,
+#       "cancelled": 2,
+#       "total": 54
+#     }
+#   }
+# }
+
+### ============================================
+### 3. COMISSÕES POR PERÍODO
+### ============================================
+
+### Obter comissões dos últimos 30 dias
+GET {{baseUrl}}/commissions/period?startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{token}}
+
+### Obter comissões do mês atual
+GET {{baseUrl}}/commissions/period?startDate=2024-02-01&endDate=2024-02-29
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": [
+#     {
+#       "date": "2024-02-01",
+#       "totalCents": 15000,
+#       "count": 3
+#     },
+#     {
+#       "date": "2024-02-02",
+#       "totalCents": 22000,
+#       "count": 5
+#     }
+#   ]
+# }
+
+### ============================================
+### EXEMPLO DE FLUXO COMPLETO
+### ============================================
+
+### 1. Afiliado gera link
+POST {{baseUrl}}/affiliates/links
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "uuid-do-produto"
+}
+
+### 2. Cliente clica no link (público, sem auth)
+GET {{baseUrl}}/affiliates/click/ABC12345
+
+### 3. Cliente compra o produto
+### (isso será implementado no módulo de Orders)
+
+### 4. Sistema calcula comissões automaticamente
+### (chamado internamente pelo sistema ao criar pedido)
+
+### 5. Afiliado consulta suas comissões
+GET {{baseUrl}}/commissions
+Authorization: Bearer {{token}}
+
+### 6. Afiliado vê resumo
+GET {{baseUrl}}/commissions/summary
+Authorization: Bearer {{token}}
+
+### 7. Após 7 dias, sistema libera comissões automaticamente
+### (job agendado que será implementado)
+
+### ============================================
+### NOTAS IMPORTANTES
+### ============================================
+
+# 1. AUTENTICAÇÃO
+#    - Todos os endpoints de comissões requerem autenticação
+#    - Apenas afiliados, vendedores e admins podem acessar
+#    - Cada usuário vê apenas suas próprias comissões
+
+# 2. ESTADOS DAS COMISSÕES
+#    - pending: Pedido criado, aguardando pagamento
+#    - held: Pagamento confirmado, em período de escrow (7 dias)
+#    - released: Escrow liberado, disponível para saque
+#    - cancelled: Pedido cancelado ou reembolsado
+
+# 3. CÁLCULO DE COMISSÕES
+#    - Calculado automaticamente ao criar pedido
+#    - Segue a cadeia de indicação (até 5 níveis)
+#    - Quem vende recebe a maior parte
+#    - Distribuição configurada no produto
+
+# 4. PERÍODO DE ESCROW
+#    - 7 dias após confirmação do pagamento
+#    - Protege contra fraudes e chargebacks
+#    - Após 7 dias, comissão é liberada automaticamente
+
+# 5. PAGINAÇÃO
+#    - Padrão: 20 itens por página
+#    - Máximo: 100 itens por página
+#    - Use page e limit para navegar
+
+# 6. FILTROS
+#    - status: pending, held, released, cancelled
+#    - productId: UUID do produto
+#    - Combine filtros para busca específica
+
+### ============================================
+### EXEMPLO DE RESPOSTA - LISTA DE COMISSÕES
+### ============================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "commissions": [
+#       {
+#         "id": "uuid",
+#         "orderId": "uuid",
+#         "productId": "uuid",
+#         "productName": "Curso de Node.js",
+#         "affiliateId": "uuid",
+#         "affiliateName": "João Silva",
+#         "level": 1,
+#         "amountCents": 5000,
+#         "status": "held",
+#         "releaseDate": "2024-02-15T00:00:00Z",
+#         "createdAt": "2024-02-08T10:30:00Z"
+#       }
+#     ],
+#     "pagination": {
+#       "page": 1,
+#       "limit": 20,
+#       "total": 54,
+#       "totalPages": 3
+#     }
+#   }
+# }

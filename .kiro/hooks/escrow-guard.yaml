@@ -1,0 +1,15 @@
+name: Guardar lógica de escrow ao salvar
+trigger: onFileSave
+filePattern: src/modules/order/**/*.js
+instruction: |
+  A lógica de pedidos/escrow foi alterada. Execute obrigatoriamente:
+
+  1. Pedido pago → status = "paid" e escrow_release_at = NOW + 7 dias (tolerância de 1 minuto)
+  2. Confirmação antecipada pelo comprador → escrow liberado antes do prazo
+  3. Prazo de 7 dias vencido → cron libera automaticamente sem ação manual
+  4. Devolução solicitada → status = "refunded", NENHUM split executado
+  5. Devolução fora do prazo → deve ser rejeitada com erro 400
+
+  Rode: npm test -- --testPathPattern=escrow --verbose
+
+  Se algum teste falhar, mostre o cenário exato e a linha do código de origem.

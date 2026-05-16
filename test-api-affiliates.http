@@ -1,0 +1,162 @@
+### IMPAKT API - Testes de Afiliados
+### Use a extensão REST Client do VS Code para executar estes testes
+
+@baseUrl = http://localhost:3000
+@token = seu_token_aqui
+@productId = uuid_do_produto
+@affiliateCode = codigo_do_link
+
+### ============================================================
+### AFILIADOS - Dashboard e Estatísticas
+### ============================================================
+
+### Obter dashboard do afiliado (autenticado)
+GET {{baseUrl}}/api/affiliates/dashboard
+Authorization: Bearer {{token}}
+
+### Listar meus links de afiliado
+GET {{baseUrl}}/api/affiliates/links?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### ============================================================
+### GERAR LINKS DE AFILIADO
+### ============================================================
+
+### Gerar link de afiliado para um produto
+POST {{baseUrl}}/api/affiliates/generate/{{productId}}
+Authorization: Bearer {{token}}
+
+### Exemplo de resposta:
+# {
+#   "status": "success",
+#   "message": "Link de afiliado gerado com sucesso",
+#   "data": {
+#     "link": {
+#       "id": "uuid",
+#       "productId": "uuid",
+#       "affiliateId": "uuid",
+#       "code": "ABC12345",
+#       "clicks": 0,
+#       "conversions": 0,
+#       "conversionRate": "0.00",
+#       "createdAt": "2026-05-11T..."
+#     },
+#     "url": "http://localhost:3000/p/uuid?ref=ABC12345"
+#   }
+# }
+
+### ============================================================
+### RASTREAMENTO DE CLIQUES (público - não requer autenticação)
+### ============================================================
+
+### Rastrear clique em link de afiliado
+GET {{baseUrl}}/api/affiliates/track/{{affiliateCode}}
+
+### Exemplo: Simular clique em link
+GET {{baseUrl}}/api/affiliates/track/ABC12345
+
+### ============================================================
+### VENDEDOR - Ver afiliados do produto
+### ============================================================
+
+### Listar afiliados de um produto (apenas vendedor do produto)
+GET {{baseUrl}}/api/affiliates/product/{{productId}}?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### ============================================================
+### FLUXO COMPLETO DE TESTE
+### ============================================================
+
+### 1. Registrar afiliado
+POST {{baseUrl}}/api/users/register
+Content-Type: application/json
+
+{
+  "email": "afiliado1@IMPAKT.com",
+  "password": "Senha123",
+  "fullName": "Maria Afiliada",
+  "role": "affiliate"
+}
+
+### 2. Login do afiliado
+POST {{baseUrl}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "afiliado1@IMPAKT.com",
+  "password": "Senha123"
+}
+
+### 3. Listar produtos disponíveis
+GET {{baseUrl}}/api/products?status=active&page=1&limit=20
+
+### 4. Gerar link para um produto
+POST {{baseUrl}}/api/affiliates/generate/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{token}}
+
+### 5. Ver dashboard com estatísticas
+GET {{baseUrl}}/api/affiliates/dashboard
+Authorization: Bearer {{token}}
+
+### 6. Simular clique no link (público)
+GET {{baseUrl}}/api/affiliates/track/ABC12345
+
+### 7. Ver links atualizados
+GET {{baseUrl}}/api/affiliates/links
+Authorization: Bearer {{token}}
+
+### ============================================================
+### EXEMPLO DE DASHBOARD RESPONSE
+### ============================================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "affiliate": {
+#       "id": "uuid",
+#       "fullName": "Maria Afiliada",
+#       "email": "afiliado1@IMPAKT.com",
+#       "referralCode": "MARIA123"
+#     },
+#     "stats": {
+#       "totalLinks": 5,
+#       "totalClicks": 150,
+#       "totalConversions": 12,
+#       "conversionRate": 8.00,
+#       "productsPromoted": 5,
+#       "totalEarnedCents": 45000,
+#       "pendingCents": 12000,
+#       "totalEarned": "R$ 450,00",
+#       "pending": "R$ 120,00"
+#     },
+#     "topProducts": [
+#       {
+#         "productId": "uuid",
+#         "productName": "Curso de Node.js",
+#         "priceCents": 19900,
+#         "clicks": 80,
+#         "conversions": 8,
+#         "conversionRate": 10.00,
+#         "earnedCents": 30000,
+#         "earned": "R$ 300,00",
+#         "price": "R$ 199,00"
+#       }
+#     ],
+#     "recentLinks": [...]
+#   }
+# }
+
+### ============================================================
+### TESTES DE VALIDAÇÃO
+### ============================================================
+
+### Tentar gerar link para produto inexistente (deve falhar)
+POST {{baseUrl}}/api/affiliates/generate/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+### Tentar rastrear código inválido (deve falhar)
+GET {{baseUrl}}/api/affiliates/track/INVALID
+
+### Tentar ver afiliados de produto sem ser o dono (deve falhar)
+GET {{baseUrl}}/api/affiliates/product/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{token}}

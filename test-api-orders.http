@@ -1,0 +1,371 @@
+### ============================================
+### IMPAKT - Testes de API - Pedidos
+### ============================================
+
+@baseUrl = http://localhost:3000/api
+@token = seu_token_jwt_aqui
+
+### ============================================
+### 1. CRIAR PEDIDO
+### ============================================
+
+### Criar pedido sem link de afiliado
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "uuid-do-produto",
+  "quantity": 1
+}
+
+### Criar pedido com link de afiliado
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "uuid-do-produto",
+  "quantity": 2,
+  "affiliateLinkCode": "ABC12345",
+  "metadata": {
+    "source": "landing_page",
+    "campaign": "black_friday"
+  }
+}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "order": {
+#       "id": "uuid",
+#       "orderNumber": "ORD-ABC123-XYZ",
+#       "productId": "uuid",
+#       "productName": "Curso de Node.js",
+#       "productType": "digital",
+#       "sellerId": "uuid",
+#       "buyerId": "uuid",
+#       "affiliateLinkCode": "ABC12345",
+#       "quantity": 1,
+#       "unitPriceCents": 19900,
+#       "totalCents": 19900,
+#       "platformFeeCents": 199,
+#       "affiliateAmountCents": 5970,
+#       "sellerAmountCents": 13731,
+#       "status": "pending",
+#       "createdAt": "2024-02-08T10:30:00Z"
+#     },
+#     "commissions": {
+#       "commissions": [...],
+#       "incomeDistributions": [...]
+#     }
+#   }
+# }
+
+### ============================================
+### 2. OBTER DETALHES DO PEDIDO
+### ============================================
+
+### Obter pedido por ID
+GET {{baseUrl}}/orders/uuid-do-pedido
+Authorization: Bearer {{token}}
+
+### ============================================
+### 3. LISTAR PEDIDOS
+### ============================================
+
+### Listar minhas compras
+GET {{baseUrl}}/orders?type=buyer&page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Listar minhas vendas
+GET {{baseUrl}}/orders?type=seller&page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Filtrar por status
+GET {{baseUrl}}/orders?type=seller&status=paid
+Authorization: Bearer {{token}}
+
+### Filtrar por produto
+GET {{baseUrl}}/orders?type=seller&productId=uuid-do-produto
+Authorization: Bearer {{token}}
+
+### Combinar filtros
+GET {{baseUrl}}/orders?type=seller&status=completed&productId=uuid-do-produto&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "orders": [
+#       {
+#         "id": "uuid",
+#         "orderNumber": "ORD-ABC123-XYZ",
+#         "productName": "Curso de Node.js",
+#         "totalCents": 19900,
+#         "status": "paid",
+#         "createdAt": "2024-02-08T10:30:00Z"
+#       }
+#     ],
+#     "pagination": {
+#       "page": 1,
+#       "limit": 20,
+#       "total": 54,
+#       "totalPages": 3
+#     }
+#   }
+# }
+
+### ============================================
+### 4. CONFIRMAR PAGAMENTO (ADMIN)
+### ============================================
+
+### Confirmar pagamento do pedido
+POST {{baseUrl}}/orders/uuid-do-pedido/confirm-payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentId": "pay_123456789",
+  "paymentMethod": "credit_card"
+}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderNumber": "ORD-ABC123-XYZ",
+#     "status": "paid",
+#     "paymentId": "pay_123456789",
+#     "paymentMethod": "credit_card",
+#     "paidAt": "2024-02-08T11:00:00Z"
+#   }
+# }
+
+### ============================================
+### 5. CANCELAR PEDIDO
+### ============================================
+
+### Cancelar pedido
+POST {{baseUrl}}/orders/uuid-do-pedido/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Cliente solicitou cancelamento"
+}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderNumber": "ORD-ABC123-XYZ",
+#     "status": "cancelled",
+#     "cancellationReason": "Cliente solicitou cancelamento",
+#     "cancelledAt": "2024-02-08T12:00:00Z"
+#   }
+# }
+
+### ============================================
+### 6. ESTATÍSTICAS
+### ============================================
+
+### Estatísticas de vendas
+GET {{baseUrl}}/orders/stats/seller
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "totalOrders": 54,
+#     "pendingOrders": 5,
+#     "paidOrders": 12,
+#     "completedOrders": 35,
+#     "cancelledOrders": 2,
+#     "refundedOrders": 0,
+#     "totalRevenueCents": 1075000,
+#     "sellerRevenueCents": 740000,
+#     "avgOrderValueCents": 19900
+#   }
+# }
+
+### Estatísticas de compras
+GET {{baseUrl}}/orders/stats/buyer
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "totalOrders": 12,
+#     "pendingOrders": 1,
+#     "paidOrders": 2,
+#     "completedOrders": 9,
+#     "cancelledOrders": 0,
+#     "totalSpentCents": 238800,
+#     "avgOrderValueCents": 19900
+#   }
+# }
+
+### ============================================
+### FLUXO COMPLETO DE COMPRA
+### ============================================
+
+### 1. Comprador busca produto
+GET {{baseUrl}}/products/uuid-do-produto
+
+### 2. Comprador clica no link de afiliado (opcional)
+GET {{baseUrl}}/affiliates/click/ABC12345
+
+### 3. Comprador cria pedido
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "uuid-do-produto",
+  "quantity": 1,
+  "affiliateLinkCode": "ABC12345"
+}
+
+### 4. Sistema calcula comissões automaticamente
+### (feito internamente ao criar pedido)
+
+### 5. Comprador realiza pagamento
+### (integração com gateway de pagamento)
+
+### 6. Webhook confirma pagamento
+POST {{baseUrl}}/orders/uuid-do-pedido/confirm-payment
+Authorization: Bearer {{token-admin}}
+Content-Type: application/json
+
+{
+  "paymentId": "pay_123456789",
+  "paymentMethod": "credit_card"
+}
+
+### 7. Comissões vão para status 'held' (escrow 7 dias)
+### (feito automaticamente ao confirmar pagamento)
+
+### 8. Comprador consulta seu pedido
+GET {{baseUrl}}/orders/uuid-do-pedido
+Authorization: Bearer {{token}}
+
+### 9. Vendedor consulta suas vendas
+GET {{baseUrl}}/orders?type=seller
+Authorization: Bearer {{token-vendedor}}
+
+### 10. Afiliado consulta suas comissões
+GET {{baseUrl}}/commissions
+Authorization: Bearer {{token-afiliado}}
+
+### ============================================
+### NOTAS IMPORTANTES
+### ============================================
+
+# 1. AUTENTICAÇÃO
+#    - Todos os endpoints requerem autenticação
+#    - Apenas comprador, vendedor ou admin podem ver o pedido
+#    - Apenas admin pode confirmar pagamento
+
+# 2. ESTADOS DO PEDIDO
+#    - pending: Aguardando pagamento
+#    - paid: Pagamento confirmado
+#    - completed: Pedido completado
+#    - cancelled: Cancelado pelo usuário
+#    - refunded: Reembolsado
+
+# 3. CRIAÇÃO DE PEDIDO
+#    - Valida se produto está publicado
+#    - Valida se comprador está ativo
+#    - Valida link de afiliado (se fornecido)
+#    - Calcula valores automaticamente
+#    - Cria comissões automaticamente (se houver afiliado)
+
+# 4. CONFIRMAÇÃO DE PAGAMENTO
+#    - Atualiza status para 'paid'
+#    - Registra ID e método de pagamento
+#    - Atualiza comissões para 'held' (escrow)
+#    - Apenas admin pode confirmar
+
+# 5. CANCELAMENTO
+#    - Pode ser feito pelo comprador, vendedor ou admin
+#    - Apenas pedidos 'pending' ou 'paid' podem ser cancelados
+#    - Cancela comissões automaticamente
+#    - Registra motivo do cancelamento
+
+# 6. COMISSÕES
+#    - Calculadas automaticamente ao criar pedido
+#    - Status 'pending' até confirmação de pagamento
+#    - Status 'held' após confirmação (escrow 7 dias)
+#    - Status 'released' após 7 dias (job agendado)
+#    - Status 'cancelled' se pedido for cancelado
+
+# 7. ESTATÍSTICAS
+#    - Vendedor: total de vendas, receita, ticket médio
+#    - Comprador: total de compras, gasto total
+#    - Filtros por status e período
+
+# 8. PAGINAÇÃO
+#    - Padrão: 20 itens por página
+#    - Máximo: 100 itens por página
+#    - Use page e limit para navegar
+
+### ============================================
+### EXEMPLO DE RESPOSTA - PEDIDO COMPLETO
+### ============================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "order": {
+#       "id": "550e8400-e29b-41d4-a716-446655440000",
+#       "orderNumber": "ORD-L5X2K9-A7B3",
+#       "productId": "660e8400-e29b-41d4-a716-446655440000",
+#       "productName": "Curso Completo de Node.js",
+#       "productType": "digital",
+#       "sellerId": "770e8400-e29b-41d4-a716-446655440000",
+#       "buyerId": "880e8400-e29b-41d4-a716-446655440000",
+#       "affiliateLinkCode": "ABC12345",
+#       "quantity": 1,
+#       "unitPriceCents": 19900,
+#       "totalCents": 19900,
+#       "platformFeeCents": 199,
+#       "affiliateAmountCents": 5970,
+#       "sellerAmountCents": 13731,
+#       "status": "pending",
+#       "paymentMethod": null,
+#       "paymentId": null,
+#       "paidAt": null,
+#       "completedAt": null,
+#       "cancelledAt": null,
+#       "cancellationReason": null,
+#       "metadata": {
+#         "source": "landing_page",
+#         "campaign": "black_friday"
+#       },
+#       "createdAt": "2024-02-08T10:30:00.000Z",
+#       "updatedAt": "2024-02-08T10:30:00.000Z"
+#     },
+#     "commissions": {
+#       "commissions": [
+#         {
+#           "id": "990e8400-e29b-41d4-a716-446655440000",
+#           "orderId": "550e8400-e29b-41d4-a716-446655440000",
+#           "productId": "660e8400-e29b-41d4-a716-446655440000",
+#           "affiliateId": "aa0e8400-e29b-41d4-a716-446655440000",
+#           "level": 1,
+#           "amountCents": 2985,
+#           "status": "pending",
+#           "releaseDate": "2024-02-15T10:30:00.000Z"
+#         }
+#       ],
+#       "incomeDistributions": []
+#     }
+#   }
+# }

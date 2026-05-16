@@ -1,0 +1,15 @@
+name: Gerar testes ao salvar qualquer módulo
+trigger: onFileSave
+filePattern: src/modules/**/*.js
+instruction: |
+  Um arquivo de módulo foi salvo. Execute as seguintes ações:
+
+  1. Identifique o módulo alterado (user, product, affiliate, order, payment, commission, media, notification)
+  2. Verifique se existe um arquivo de teste correspondente em tests/unit/{modulo}/
+  3. Se o arquivo de teste NÃO existir, crie-o com casos básicos para todas as funções públicas do arquivo alterado
+  4. Se o arquivo de teste JÁ existir, verifique se cobre as funções que foram alteradas ou adicionadas
+  5. Rode os testes do módulo afetado: npm test -- --testPathPattern={nomeDoPastelModulo}
+
+  Contexto do projeto: leia .kiro/steering/testing.md para entender as regras de negócio do IMPAKT antes de gerar qualquer teste.
+
+  Prioridade máxima para os módulos: commission, order, affiliate (críticos para o negócio).
