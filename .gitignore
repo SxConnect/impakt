@@ -30,6 +30,13 @@ Thumbs.db
 dist/
 build/
 
+# Test Coverage
+coverage/
+.nyc_output/
+
 # Uploads temporários
 uploads/
 temp/
+
+# PostgreSQL portable (se estiver na pasta do projeto)
+postgres-portable/
