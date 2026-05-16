@@ -1,0 +1,19 @@
+name: Guardar lógica de split ao salvar
+trigger: onFileSave
+filePattern: src/modules/commission/**/*.js
+instruction: |
+  O motor de comissão foi alterado. Execute obrigatoriamente os seguintes testes:
+
+  1. Soma dos percentuais por nível == 100% do pool de afiliados (testar com 2, 3, 4 e 5 níveis)
+  2. Quem realiza a venda recebe sempre a maior fatia — em todos os cenários de nível
+  3. Nível mais distante da venda recebe mínimo de 10% do pool
+  4. Valores em centavos: platform_cents + affiliate_total + seller_cents == amount_cents (sem diferença de 1 centavo)
+  5. Devolução: nenhuma comissão calculada (tudo zero)
+
+  Rode: npm test -- --testPathPattern=CommissionCalculator --verbose
+
+  Se qualquer teste falhar:
+  - Mostre o nome do teste que falhou
+  - Mostre o valor esperado vs o valor recebido
+  - Aponte a linha exata do CommissionCalculator.js que causou o erro
+  - Sugira a correção antes de continuar

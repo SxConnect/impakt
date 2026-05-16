@@ -1,0 +1,474 @@
+### ============================================
+### IMPAKT - Testes de API - Pagamentos
+### ============================================
+
+@baseUrl = http://localhost:3000/api
+@token = seu_token_jwt_aqui
+@orderId = uuid-do-pedido
+
+### ============================================
+### 1. PROCESSAR PAGAMENTO - CARTÃO DE CRÉDITO
+### ============================================
+
+### Pagar.me - Cartão de Crédito
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "pagarme",
+  "method": "credit_card",
+  "paymentData": {
+    "card": {
+      "number": "4111111111111111",
+      "holder_name": "João Silva",
+      "exp_month": 12,
+      "exp_year": 2025,
+      "cvv": "123"
+    },
+    "cardBrand": "visa",
+    "cardLastDigits": "1111",
+    "installments": 1,
+    "metadata": {
+      "ip": "192.168.1.1",
+      "user_agent": "Mozilla/5.0"
+    }
+  }
+}
+
+### Stripe - Cartão de Crédito
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "stripe",
+  "method": "credit_card",
+  "paymentData": {
+    "paymentMethodId": "pm_card_visa",
+    "cardBrand": "visa",
+    "cardLastDigits": "4242",
+    "installments": 1
+  }
+}
+
+### Asaas - Cartão de Crédito
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "asaas",
+  "method": "credit_card",
+  "paymentData": {
+    "card": {
+      "holderName": "João Silva",
+      "number": "5162306219378829",
+      "expiryMonth": "12",
+      "expiryYear": "2025",
+      "ccv": "123"
+    },
+    "cardBrand": "mastercard",
+    "cardLastDigits": "8829",
+    "installments": 3
+  }
+}
+
+### ============================================
+### 2. PROCESSAR PAGAMENTO - BOLETO
+### ============================================
+
+### Pagar.me - Boleto
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "pagarme",
+  "method": "boleto",
+  "paymentData": {
+    "dueDate": "2024-12-31"
+  }
+}
+
+### Asaas - Boleto
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "asaas",
+  "method": "boleto",
+  "paymentData": {
+    "dueDate": "2024-12-31"
+  }
+}
+
+### ============================================
+### 3. PROCESSAR PAGAMENTO - PIX
+### ============================================
+
+### Pagar.me - PIX
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "pagarme",
+  "method": "pix",
+  "paymentData": {
+    "expiresIn": 3600
+  }
+}
+
+### Stripe - PIX
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "stripe",
+  "method": "pix",
+  "paymentData": {}
+}
+
+### Asaas - PIX
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "asaas",
+  "method": "pix",
+  "paymentData": {}
+}
+
+### ============================================
+### 4. OBTER DETALHES DO PAGAMENTO
+### ============================================
+
+### Obter pagamento por ID
+GET {{baseUrl}}/payments/uuid-do-pagamento
+Authorization: Bearer {{token}}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderId": "uuid",
+#     "provider": "pagarme",
+#     "providerPaymentId": "pay_123456",
+#     "method": "credit_card",
+#     "amountCents": 19900,
+#     "status": "paid",
+#     "installments": 1,
+#     "cardBrand": "visa",
+#     "cardLastDigits": "1111",
+#     "paidAt": "2024-02-08T11:00:00Z",
+#     "createdAt": "2024-02-08T10:30:00Z"
+#   }
+# }
+
+### ============================================
+### 5. REEMBOLSAR PAGAMENTO
+### ============================================
+
+### Reembolsar pagamento (admin ou vendedor)
+POST {{baseUrl}}/payments/uuid-do-pagamento/refund
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Cliente solicitou reembolso"
+}
+
+### Resposta esperada:
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderId": "uuid",
+#     "status": "refunded",
+#     "refundReason": "Cliente solicitou reembolso",
+#     "refundedAt": "2024-02-08T12:00:00Z"
+#   }
+# }
+
+### ============================================
+### 6. WEBHOOKS (Endpoints Públicos)
+### ============================================
+
+### Webhook Pagar.me
+POST {{baseUrl}}/payments/webhook/pagarme
+Content-Type: application/json
+X-Hub-Signature: sha256=...
+
+{
+  "id": "hook_123",
+  "type": "payment.paid",
+  "data": {
+    "id": "pay_123456",
+    "status": "paid",
+    "amount": 19900
+  }
+}
+
+### Webhook Stripe
+POST {{baseUrl}}/payments/webhook/stripe
+Content-Type: application/json
+Stripe-Signature: t=...,v1=...
+
+{
+  "id": "evt_123",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_123456",
+      "status": "succeeded",
+      "amount": 19900
+    }
+  }
+}
+
+### Webhook Asaas
+POST {{baseUrl}}/payments/webhook/asaas
+Content-Type: application/json
+Asaas-Access-Token: ...
+
+{
+  "event": "PAYMENT_CONFIRMED",
+  "payment": {
+    "id": "pay_123456",
+    "status": "CONFIRMED",
+    "value": 199.00
+  }
+}
+
+### ============================================
+### FLUXO COMPLETO DE PAGAMENTO
+### ============================================
+
+### 1. Cliente cria pedido
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "uuid-do-produto",
+  "quantity": 1,
+  "affiliateLinkCode": "ABC12345"
+}
+
+### 2. Sistema retorna pedido com ID
+### Guardar orderId para próximo passo
+
+### 3. Cliente escolhe método de pagamento e processa
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "uuid-do-pedido",
+  "provider": "pagarme",
+  "method": "credit_card",
+  "paymentData": {
+    "card": {
+      "number": "4111111111111111",
+      "holder_name": "João Silva",
+      "exp_month": 12,
+      "exp_year": 2025,
+      "cvv": "123"
+    },
+    "cardBrand": "visa",
+    "cardLastDigits": "1111",
+    "installments": 1
+  }
+}
+
+### 4. Se cartão: pagamento confirmado imediatamente
+### Se boleto/PIX: aguarda webhook de confirmação
+
+### 5. Webhook confirma pagamento (assíncrono)
+### Sistema atualiza pedido e comissões automaticamente
+
+### 6. Cliente consulta pagamento
+GET {{baseUrl}}/payments/uuid-do-pagamento
+Authorization: Bearer {{token}}
+
+### 7. Vendedor consulta pedido
+GET {{baseUrl}}/orders/uuid-do-pedido
+Authorization: Bearer {{token-vendedor}}
+
+### 8. Afiliado consulta comissões
+GET {{baseUrl}}/commissions
+Authorization: Bearer {{token-afiliado}}
+
+### ============================================
+### TROCAR DE GATEWAY
+### ============================================
+
+### Usar Pagar.me
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "pagarme",  # ⭐ Escolhe aqui
+  "method": "credit_card",
+  "paymentData": { ... }
+}
+
+### Usar Stripe
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "stripe",  # ⭐ Escolhe aqui
+  "method": "credit_card",
+  "paymentData": { ... }
+}
+
+### Usar Asaas
+POST {{baseUrl}}/payments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": "{{orderId}}",
+  "provider": "asaas",  # ⭐ Escolhe aqui
+  "method": "credit_card",
+  "paymentData": { ... }
+}
+
+### ============================================
+### NOTAS IMPORTANTES
+### ============================================
+
+# 1. PROVIDERS SUPORTADOS
+#    - pagarme: Cartão, Boleto, PIX
+#    - stripe: Cartão, PIX (boleto não nativo)
+#    - asaas: Cartão, Boleto, PIX
+
+# 2. MÉTODOS DE PAGAMENTO
+#    - credit_card: Confirmação imediata
+#    - boleto: Aguarda pagamento (webhook)
+#    - pix: Aguarda pagamento (webhook)
+#    - debit_card: Confirmação imediata
+
+# 3. ARQUITETURA HEXAGONAL
+#    - Trocar gateway sem afetar código
+#    - Adicionar novos gateways facilmente
+#    - Testar com mocks
+#    - Usar múltiplos gateways simultaneamente
+
+# 4. WEBHOOKS
+#    - Endpoints públicos (sem autenticação)
+#    - Validação de assinatura
+#    - Processamento assíncrono
+#    - Atualização automática de pedidos e comissões
+
+# 5. REEMBOLSOS
+#    - Apenas admin ou vendedor
+#    - Apenas pagamentos pagos
+#    - Cancela comissões automaticamente
+#    - Atualiza pedido para 'refunded'
+
+# 6. SEGURANÇA
+#    - Validação de webhooks
+#    - Dados de cartão não são armazenados
+#    - Apenas últimos 4 dígitos salvos
+#    - Tokens de pagamento do gateway
+
+# 7. CONFIGURAÇÃO
+#    - Via .env: PAYMENT_PROVIDER=pagarme
+#    - Via código: provider: 'stripe'
+#    - Dinâmico: baseado em regras de negócio
+
+# 8. PARCELAMENTO
+#    - Até 12x (depende do gateway)
+#    - Configurável por pagamento
+#    - Juros definidos pelo gateway
+
+### ============================================
+### EXEMPLO DE RESPOSTA - PAGAMENTO COMPLETO
+### ============================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "550e8400-e29b-41d4-a716-446655440000",
+#     "orderId": "660e8400-e29b-41d4-a716-446655440000",
+#     "provider": "pagarme",
+#     "providerPaymentId": "pay_abc123xyz",
+#     "providerCustomerId": "cus_pagarme_123",
+#     "method": "credit_card",
+#     "amountCents": 19900,
+#     "status": "paid",
+#     "paidAt": "2024-02-08T11:00:00.000Z",
+#     "refundedAt": null,
+#     "refundReason": null,
+#     "installments": 1,
+#     "cardBrand": "visa",
+#     "cardLastDigits": "1111",
+#     "boletoUrl": null,
+#     "boletoBarcode": null,
+#     "pixQrCode": null,
+#     "pixQrCodeUrl": null,
+#     "metadata": {
+#       "ip": "192.168.1.1",
+#       "user_agent": "Mozilla/5.0"
+#     },
+#     "createdAt": "2024-02-08T10:30:00.000Z",
+#     "updatedAt": "2024-02-08T11:00:00.000Z"
+#   }
+# }
+
+### ============================================
+### EXEMPLO DE RESPOSTA - BOLETO
+### ============================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderId": "uuid",
+#     "provider": "pagarme",
+#     "method": "boleto",
+#     "amountCents": 19900,
+#     "status": "pending",
+#     "boletoUrl": "https://pagar.me/boleto/bol_123456",
+#     "boletoBarcode": "23793.38128 60000.000001 00000.000000 1 99990000010000",
+#     "createdAt": "2024-02-08T10:30:00.000Z"
+#   }
+# }
+
+### ============================================
+### EXEMPLO DE RESPOSTA - PIX
+### ============================================
+
+# {
+#   "status": "success",
+#   "data": {
+#     "id": "uuid",
+#     "orderId": "uuid",
+#     "provider": "pagarme",
+#     "method": "pix",
+#     "amountCents": 19900,
+#     "status": "pending",
+#     "pixQrCode": "00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426655440000",
+#     "pixQrCodeUrl": "https://pagar.me/pix/pix_123456/qrcode.png",
+#     "createdAt": "2024-02-08T10:30:00.000Z"
+#   }
+# }

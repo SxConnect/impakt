@@ -1,0 +1,237 @@
+### IMPAKT API - Testes
+### Use a extensão REST Client do VS Code para executar estes testes
+
+@baseUrl = http://localhost:3000
+@token = seu_token_aqui
+
+### Health Check
+GET {{baseUrl}}/health
+
+### ============================================================
+### AUTENTICAÇÃO
+### ============================================================
+
+### Registrar novo vendedor
+POST {{baseUrl}}/api/users/register
+Content-Type: application/json
+
+{
+  "email": "vendedor@IMPAKT.com",
+  "password": "Senha123",
+  "fullName": "João Vendedor Silva",
+  "phone": "(11) 98888-8888",
+  "role": "seller",
+  "cpfCnpj": "123.456.789-00"
+}
+
+### Registrar novo afiliado
+POST {{baseUrl}}/api/users/register
+Content-Type: application/json
+
+{
+  "email": "afiliado@IMPAKT.com",
+  "password": "Senha123",
+  "fullName": "Maria Afiliada Santos",
+  "phone": "(11) 99999-9999",
+  "role": "affiliate",
+  "referredByCode": "ABC12345"
+}
+
+### Login
+POST {{baseUrl}}/api/users/login
+Content-Type: application/json
+
+{
+  "email": "vendedor@IMPAKT.com",
+  "password": "Senha123"
+}
+
+### ============================================================
+### PERFIL DO USUÁRIO (requer autenticação)
+### ============================================================
+
+### Obter meu perfil
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### Atualizar meu perfil
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fullName": "João Vendedor Silva Atualizado",
+  "bio": "Vendedor de produtos digitais",
+  "cpfCnpj": "123.456.789-00",
+  "bankAccount": {
+    "bank": "001",
+    "agency": "1234",
+    "account": "12345-6",
+    "accountType": "corrente",
+    "pixKey": "vendedor@IMPAKT.com"
+  }
+}
+
+### Obter perfil público de outro usuário
+GET {{baseUrl}}/api/users/550e8400-e29b-41d4-a716-446655440000
+
+### ============================================================
+### PRODUTOS
+### ============================================================
+
+### Listar todos os produtos (público)
+GET {{baseUrl}}/api/products?page=1&limit=20
+
+### Buscar produtos por texto
+GET {{baseUrl}}/api/products?search=curso&page=1&limit=20
+
+### Filtrar produtos por tipo
+GET {{baseUrl}}/api/products?productType=digital&page=1&limit=20
+
+### Filtrar produtos por faixa de preço
+GET {{baseUrl}}/api/products?minPrice=1000&maxPrice=10000
+
+### Listar produtos de um vendedor específico
+GET {{baseUrl}}/api/products/seller/550e8400-e29b-41d4-a716-446655440000
+
+### Listar meus produtos (autenticado)
+GET {{baseUrl}}/api/products/my
+Authorization: Bearer {{token}}
+
+### Obter produto por ID
+GET {{baseUrl}}/api/products/550e8400-e29b-41d4-a716-446655440000
+
+### ============================================================
+### CRIAR E GERENCIAR PRODUTOS (requer autenticação como seller)
+### ============================================================
+
+### Criar produto digital simples
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Curso de Node.js Completo",
+  "shortDescription": "Aprenda Node.js do zero ao avançado",
+  "description": "Curso completo de Node.js com mais de 100 aulas práticas. Aprenda Express, MongoDB, PostgreSQL, autenticação JWT e muito mais.",
+  "productType": "digital",
+  "priceCents": 19900,
+  "affiliatePct": 30,
+  "maxAffiliateLevels": 3,
+  "warrantyDays": 7
+}
+
+### Criar produto com configuração avançada de comissões
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Mentoria Individual 1 Mês",
+  "shortDescription": "Mentoria personalizada para desenvolvedores",
+  "description": "Mentoria individual com sessões semanais, suporte via WhatsApp e revisão de código.",
+  "productType": "service",
+  "priceCents": 50000,
+  "affiliatePct": 40,
+  "maxAffiliateLevels": 5,
+  "levelCommission": [
+    { "level": 1, "pct": 40 },
+    { "level": 2, "pct": 25 },
+    { "level": 3, "pct": 20 },
+    { "level": 4, "pct": 10 },
+    { "level": 5, "pct": 5 }
+  ],
+  "warrantyDays": 7
+}
+
+### Criar produto com distribuição de renda
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "E-book: Guia Completo de Marketing Digital",
+  "shortDescription": "Tudo sobre marketing digital em um único e-book",
+  "description": "E-book com mais de 300 páginas sobre estratégias de marketing digital, SEO, redes sociais e muito mais.",
+  "productType": "digital",
+  "priceCents": 4900,
+  "affiliatePct": 35,
+  "maxAffiliateLevels": 3,
+  "incomeDistEnabled": true,
+  "incomeDistConfig": [
+    { "userId": "beneficiario-uuid-1", "pct": 10 },
+    { "userId": "beneficiario-uuid-2", "pct": 5 }
+  ],
+  "warrantyDays": 7
+}
+
+### Criar assinatura recorrente
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Plataforma de Cursos - Assinatura Mensal",
+  "shortDescription": "Acesso ilimitado a todos os cursos",
+  "description": "Assinatura mensal com acesso a mais de 50 cursos de programação, design e marketing.",
+  "productType": "subscription",
+  "priceCents": 9900,
+  "recurringDays": 30,
+  "affiliatePct": 25,
+  "maxAffiliateLevels": 3,
+  "warrantyDays": 7
+}
+
+### Atualizar produto
+PATCH {{baseUrl}}/api/products/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Curso de Node.js Completo - ATUALIZADO",
+  "priceCents": 24900,
+  "shortDescription": "Aprenda Node.js do zero ao avançado com projetos reais"
+}
+
+### Publicar produto (tornar ativo)
+POST {{baseUrl}}/api/products/550e8400-e29b-41d4-a716-446655440000/publish
+Authorization: Bearer {{token}}
+
+### Pausar produto
+POST {{baseUrl}}/api/products/550e8400-e29b-41d4-a716-446655440000/pause
+Authorization: Bearer {{token}}
+
+### Deletar produto
+DELETE {{baseUrl}}/api/products/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{token}}
+
+### ============================================================
+### EXEMPLOS DE CONFIGURAÇÕES DE COMISSÕES
+### ============================================================
+
+### Configuração para 1 nível (100% para quem vende)
+# "levelCommission": [
+#   { "level": 1, "pct": 100 }
+# ]
+
+### Configuração para 2 níveis
+# "levelCommission": [
+#   { "level": 1, "pct": 60 },
+#   { "level": 2, "pct": 40 }
+# ]
+
+### Configuração para 3 níveis (padrão)
+# "levelCommission": [
+#   { "level": 1, "pct": 50 },
+#   { "level": 2, "pct": 30 },
+#   { "level": 3, "pct": 20 }
+# ]
+
+### Configuração para 5 níveis
+# "levelCommission": [
+#   { "level": 1, "pct": 40 },
+#   { "level": 2, "pct": 25 },
+#   { "level": 3, "pct": 20 },
+#   { "level": 4, "pct": 10 },
+#   { "level": 5, "pct": 5 }
+# ]
