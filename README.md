@@ -1,4 +1,61 @@
-# IMPAKT — Testes Automatizados
+# 🚀 IMPAKT Backend
+
+**I**mpulsionando **M**ercados com **P**agamentos **A**utomáticos, **K**omissões e **T**ransações
+
+Sistema completo de marketplace com programa de afiliados multinível, split payment automático e gestão de comissões.
+
+[![GitHub](https://img.shields.io/badge/GitHub-SxConnect%2Fimpakt-blue)](https://github.com/SxConnect/impakt)
+[![Node.js](https://img.shields.io/badge/Node.js-ES6%20Modules-green)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
+[![Tests](https://img.shields.io/badge/Tests-75%20passing-success)](./TESTES-ATUALIZADOS.md)
+[![Coverage](https://img.shields.io/badge/Coverage-80%25%2B-brightgreen)](./coverage/index.html)
+
+---
+
+## 📋 Sobre o Projeto
+
+IMPAKT é uma plataforma de marketplace que permite:
+
+- 🛍️ **Marketplace Completo** - Vendedores, produtos, pedidos e pagamentos
+- 🤝 **Programa de Afiliados** - Sistema multinível com rastreamento de conversões
+- 💰 **Split Payment Automático** - Divisão inteligente de valores entre participantes
+- 📊 **Gestão de Comissões** - Cálculo e liberação automática de comissões
+- 🔒 **Escrow** - Retenção de valores até confirmação de entrega
+- 🔄 **Recorrência** - Suporte a assinaturas e pagamentos recorrentes
+
+---
+
+## 🏗️ Arquitetura
+
+O projeto segue os princípios de **Clean Architecture** com separação clara de responsabilidades:
+
+```
+src/
+├── modules/              # Módulos de domínio
+│   ├── affiliate/       # Sistema de afiliados
+│   ├── commission/      # Cálculo de comissões
+│   ├── order/           # Gestão de pedidos
+│   ├── payment/         # Processamento de pagamentos
+│   ├── product/         # Catálogo de produtos
+│   ├── user/            # Gestão de usuários
+│   └── notification/    # Notificações
+├── shared/              # Código compartilhado
+│   ├── database/        # Conexão com banco
+│   ├── middleware/      # Middlewares Express
+│   ├── services/        # Serviços compartilhados
+│   └── utils/           # Utilitários
+└── jobs/                # Jobs agendados
+```
+
+Cada módulo segue a estrutura:
+- **domain/** - Entidades e regras de negócio
+- **application/** - Casos de uso
+- **infrastructure/** - Implementações (repositórios, gateways)
+- **http/** - Rotas e controllers
+
+---
+
+## 🧪 Testes Automatizados
 
 Suite completa de testes para o marketplace IMPAKT.  
 Integrada com os **Agent Hooks do Kiro** para execução automática.
